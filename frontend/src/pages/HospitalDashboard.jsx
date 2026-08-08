@@ -17,8 +17,7 @@ export const HospitalDashboard = () => {
 
   // Update Bed state
   const [updatingBedId, setUpdatingBedId] = useState(null)
-  const [updateTotal, setUpdateTotal] = useState(0)
-  const [updateOccupied, setUpdateOccupied] = useState(0)
+  const [bedInputs, setBedInputs] = useState({})
   const [updateSuccess, setUpdateSuccess] = useState(false)
   const [updateError, setUpdateError] = useState("")
 
@@ -206,13 +205,18 @@ export const HospitalDashboard = () => {
   }, [])
 
   // Bed inventory update handler
-  const handleUpdateBedSubmit = async (e, bedId) => {
+  const handleUpdateBedSubmit = async (e, bed) => {
     e.preventDefault()
+    const bedId = bed.id
     setUpdatingBedId(bedId)
     setUpdateError("")
     setUpdateSuccess(false)
 
-    if (updateOccupied > updateTotal) {
+    const inputs = bedInputs[bedId] || {}
+    const total = inputs.total !== undefined && inputs.total !== "" ? parseInt(inputs.total) : bed.total_beds
+    const occupied = inputs.occupied !== undefined && inputs.occupied !== "" ? parseInt(inputs.occupied) : bed.occupied_beds
+
+    if (occupied > total) {
       setUpdateError("Occupied beds cannot exceed total beds.")
       setUpdatingBedId(null)
       return
@@ -223,7 +227,7 @@ export const HospitalDashboard = () => {
       const idempotencyKey = `idem-bed-${bedId}-${Date.now()}`
       const response = await api.put(
         `/api/v1/hospital/beds/${bedId}`,
-        { total_beds: parseInt(updateTotal), occupied_beds: parseInt(updateOccupied) },
+        { total_beds: total, occupied_beds: occupied },
         { headers: { "Idempotency-Key": idempotencyKey } }
       )
 
@@ -231,7 +235,12 @@ export const HospitalDashboard = () => {
         setUpdateSuccess(true)
         const updatedBed = await response.json()
         setBeds((prev) => prev.map((b) => (b.id === bedId ? updatedBed : b)))
-        setTimeout(() => setUpdateSuccess(false), 2000)
+        // Clear inputs on success
+        setBedInputs((prev) => ({
+          ...prev,
+          [bedId]: { total: "", occupied: "" }
+        }))
+        setTimeout(() => setUpdateSuccess(false), 3000)
       } else {
         const err = await response.json()
         setUpdateError(err.detail || "Failed to update bed counts.")
@@ -551,6 +560,20 @@ export const HospitalDashboard = () => {
           <div>
             <h2 className="text-xl font-display font-bold text-slate-900 mb-6">Manage Live Bed Counts</h2>
 
+            {updateError && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 flex items-start space-x-2 text-sm max-w-2xl">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>{updateError}</span>
+              </div>
+            )}
+
+            {updateSuccess && (
+              <div className="mb-6 p-4 rounded-xl bg-emerald-50 text-emerald-700 flex items-start space-x-2 text-sm max-w-2xl">
+                <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>Bed counts updated successfully!</span>
+              </div>
+            )}
+
             {beds.length === 0 ? (
               <div className="glass-panel text-center py-16 rounded-3xl text-slate-500 font-light">
                 No bed registries configured.
@@ -589,7 +612,7 @@ export const HospitalDashboard = () => {
 
                     {/* Quick update counts form */}
                     <form
-                      onSubmit={(e) => handleUpdateBedSubmit(e, bed.id)}
+                      onSubmit={(e) => handleUpdateBedSubmit(e, bed)}
                       className="border-t border-slate-150/50 pt-4 mt-2 flex flex-col sm:flex-row items-end gap-3"
                     >
                       <div className="flex-grow grid grid-cols-2 gap-2">
@@ -599,9 +622,13 @@ export const HospitalDashboard = () => {
                             type="number"
                             required
                             min="0"
-                            onChange={(e) => setUpdateTotal(e.target.value)}
+                            value={bedInputs[bed.id]?.total ?? ""}
+                            onChange={(e) => setBedInputs((prev) => ({
+                              ...prev,
+                              [bed.id]: { ...prev[bed.id], total: e.target.value }
+                            }))}
                             placeholder={bed.total_beds}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm"
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"
                           />
                         </div>
                         <div>
@@ -610,9 +637,13 @@ export const HospitalDashboard = () => {
                             type="number"
                             required
                             min="0"
-                            onChange={(e) => setUpdateOccupied(e.target.value)}
+                            value={bedInputs[bed.id]?.occupied ?? ""}
+                            onChange={(e) => setBedInputs((prev) => ({
+                              ...prev,
+                              [bed.id]: { ...prev[bed.id], occupied: e.target.value }
+                            }))}
                             placeholder={bed.occupied_beds}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm"
+                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"
                           />
                         </div>
                       </div>
