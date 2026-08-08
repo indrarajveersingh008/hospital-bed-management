@@ -140,42 +140,61 @@ export const Hospitals = () => {
     }
   }
 
-  // Calculate coordinates bounds to scale coordinates onto SVG map viewport
-  const getMapPoints = () => {
-    if (hospitals.length === 0) return []
+  const mapRef = useRef(null)
+  const leafletMapInstance = useRef(null)
+  const markersRef = useRef([])
 
-    const lats = hospitals.map(h => h.latitude).concat([USER_LAT])
-    const lngs = hospitals.map(h => h.longitude).concat([USER_LNG])
+  useEffect(() => {
+    // 1. Initialize Leaflet map if it hasn't been initialized yet
+    if (mapRef.current && window.L && !leafletMapInstance.current) {
+      leafletMapInstance.current = window.L.map(mapRef.current).setView([USER_LAT, USER_LNG], 12)
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(leafletMapInstance.current)
+    }
 
-    const minLat = Math.min(...lats)
-    const maxLat = Math.max(...lats)
-    const minLng = Math.min(...lngs)
-    const maxLng = Math.max(...lngs)
+    // 2. Clear old markers
+    if (window.L && leafletMapInstance.current) {
+      markersRef.current.forEach(marker => marker.remove())
+      markersRef.current = []
 
-    const latRange = maxLat - minLat || 0.01
-    const lngRange = maxLng - minLng || 0.01
+      // 3. Add new markers for hospitals
+      const points = []
+      
+      // Add user location circle marker
+      const userMarker = window.L.circleMarker([USER_LAT, USER_LNG], {
+        radius: 8,
+        fillColor: "#6366f1",
+        color: "#ffffff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+      })
+      .addTo(leafletMapInstance.current)
+      .bindPopup("<b>Your Location</b>")
+      
+      markersRef.current.push(userMarker)
+      points.push([USER_LAT, USER_LNG])
 
-    // Map function to translate coordinates to [30, 370] SVG points
-    const projectX = (lng) => 30 + ((lng - minLng) / lngRange) * 340
-    const projectY = (lat) => 370 - ((lat - minLat) / latRange) * 340 // Invert Y for maps
+      hospitals.forEach(h => {
+        if (h.latitude && h.longitude) {
+          const marker = window.L.marker([h.latitude, h.longitude])
+            .addTo(leafletMapInstance.current)
+            .bindPopup(`<b>${h.name}</b><br/>${h.hospital_type} Facility<br/><a href="/hospitals/${h.id}" style="color: #4f46e5; font-weight: bold; text-decoration: underline;">View Beds</a>`)
+          
+          markersRef.current.push(marker)
+          points.push([h.latitude, h.longitude])
+        }
+      })
 
-    return {
-      hospitals: hospitals.map(h => ({
-        id: h.id,
-        name: h.name,
-        type: h.hospital_type,
-        distance: h.distance,
-        cx: projectX(h.longitude),
-        cy: projectY(h.latitude)
-      })),
-      user: {
-        cx: projectX(USER_LNG),
-        cy: projectY(USER_LAT)
+      // 4. Adjust map view to fit all markers dynamically
+      if (points.length > 1) {
+        leafletMapInstance.current.fitBounds(points, { padding: [50, 50] })
+      } else {
+        leafletMapInstance.current.setView([USER_LAT, USER_LNG], 12)
       }
     }
-  }
-
-  const mapPoints = getMapPoints()
+  }, [hospitals])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -302,96 +321,27 @@ export const Hospitals = () => {
             ))}
           </div>
 
-          {/* Stylized Vector Area Map */}
+          {/* Stylized Interactive Map */}
           <div className="glass-panel p-6 rounded-3xl shadow-sm border border-slate-100 sticky top-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-bold text-slate-800 flex items-center gap-1.5">
                 <Compass className="h-5 w-5 text-brand-500" />
-                <span>Area Coverage Map</span>
+                <span>Interactive Coverage Map</span>
               </h3>
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                Ref: Pune Central
+                Live OpenStreetMap
               </span>
             </div>
 
-            {/* SVG Canvas Map */}
-            <div className="relative aspect-square w-full rounded-2xl bg-slate-50 border border-slate-200/60 overflow-hidden shadow-inner">
-              <svg viewBox="0 0 400 400" className="w-full h-full">
-                {/* Background grid */}
-                <defs>
-                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(203, 213, 225, 0.25)" strokeWidth="0.5" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-
-                {/* Stylized highways */}
-                <path d="M 0 200 Q 200 200 400 200" fill="none" stroke="rgba(226, 232, 240, 0.8)" strokeWidth="4" />
-                <path d="M 200 0 Q 200 200 200 400" fill="none" stroke="rgba(226, 232, 240, 0.8)" strokeWidth="4" />
-                <path d="M 50 50 Q 200 200 350 350" fill="none" stroke="rgba(226, 232, 240, 0.4)" strokeWidth="2" />
-
-                {/* User Location Node */}
-                {mapPoints.user && (
-                  <g>
-                    {/* Pulsing effect ring */}
-                    <circle cx={mapPoints.user.cx} cy={mapPoints.user.cy} r="16" fill="rgba(99, 102, 241, 0.15)" className="animate-ping" style={{ transformOrigin: `${mapPoints.user.cx}px ${mapPoints.user.cy}px` }} />
-                    <circle cx={mapPoints.user.cx} cy={mapPoints.user.cy} r="8" fill="rgba(99, 102, 241, 0.3)" />
-                    <circle cx={mapPoints.user.cx} cy={mapPoints.user.cy} r="4" fill="#6366f1" />
-                  </g>
-                )}
-
-                {/* Hospital Nodes / Pins */}
-                {mapPoints.hospitals && mapPoints.hospitals.map((h) => {
-                  const isHovered = hoveredHospitalId === h.id
-                  const isSelected = selectedHospitalId === h.id
-                  return (
-                    <g
-                      key={h.id}
-                      onClick={() => handleNodeClick(h.id)}
-                      onMouseEnter={() => setHoveredHospitalId(h.id)}
-                      onMouseLeave={() => setHoveredHospitalId(null)}
-                      className="cursor-pointer"
-                    >
-                      {/* Selection indicator ring */}
-                      {(isHovered || isSelected) && (
-                        <circle cx={h.cx} cy={h.cy} r="12" fill="rgba(11, 100, 244, 0.1)" stroke="rgba(11, 100, 244, 0.2)" strokeWidth="1" />
-                      )}
-                      
-                      {/* Main node pin */}
-                      <circle
-                        cx={h.cx}
-                        cy={h.cy}
-                        r={isSelected ? "6.5" : "5"}
-                        fill={isSelected ? "#0b64f4" : isHovered ? "#3c83f6" : "#cbd5e1"}
-                        stroke="#ffffff"
-                        strokeWidth="1.5"
-                        className="transition-all duration-150"
-                      />
-                    </g>
-                  )
-                })}
-              </svg>
-
-              {/* Dynamic Map Tooltip Overlay */}
-              {hoveredHospitalId && (() => {
-                const h = mapPoints.hospitals.find(item => item.id === hoveredHospitalId)
-                if (!h) return null
-                return (
-                  <div className="absolute top-2 left-2 right-2 bg-slate-900/90 backdrop-blur-sm text-white p-3 rounded-xl border border-slate-800 shadow-lg text-[11px] space-y-1 z-20 pointer-events-none">
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold font-display uppercase tracking-wider">{h.name}</span>
-                      <span className="px-1.5 py-0.5 rounded bg-brand-500 text-[9px] font-bold">{h.type}</span>
-                    </div>
-                    <div className="text-slate-400">
-                      {h.distance !== null ? `${h.distance.toFixed(1)} km from your location` : "Coordinates verified"}
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
+            {/* Leaflet Map DOM Target */}
+            <div 
+              ref={mapRef} 
+              className="w-full aspect-square rounded-2xl border border-slate-200/60 overflow-hidden shadow-md z-10" 
+              style={{ minHeight: "350px" }}
+            />
             
             <p className="text-[10px] text-slate-400 font-light mt-3 text-center">
-              * Click on any point node map pin to select and scroll the hospital card details.
+              * Drag the map to navigate, click markers to view facility details and bed availability links.
             </p>
           </div>
 
