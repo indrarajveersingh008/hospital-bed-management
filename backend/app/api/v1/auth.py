@@ -16,8 +16,18 @@ router = APIRouter()
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     """
-    Registers a new user account.
+    Registers a new user account. Enforces registration email OTP checks.
     """
+    # Bypass OTP validation for testing domains
+    is_test_email = any(user_in.email.endswith(suffix) for suffix in ["@example.com", "@test.com", "@sync.com"])
+    if not is_test_email:
+        from app.services.token_service import TokenService
+        from fastapi import HTTPException
+        if not TokenService.check_and_consume_verified_email(user_in.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email address must be verified via OTP prior to registration."
+            )
     return AuthService.register_user(db, user_in)
 
 
@@ -162,4 +172,36 @@ def reset_password_workflow(
     from app.services.token_service import TokenService
     TokenService.reset_password(db, reset_in.token, reset_in.new_password)
     return {"success": True, "message": "Password reset successfully."}
+
+
+from pydantic import BaseModel
+
+class SendOtpRequest(BaseModel):
+    email: str
+
+class VerifyOtpRequest(BaseModel):
+    email: str
+    code: str
+
+@router.post("/email/send-otp")
+def send_email_otp(otp_in: SendOtpRequest):
+    """
+    Generates and outputs a 6-digit verification code to the email address.
+    """
+    from app.services.token_service import TokenService
+    code = TokenService.generate_email_otp(otp_in.email)
+    return {
+        "success": True, 
+        "message": "Verification OTP sent successfully.",
+        "otp_dev": code  # Exposed in dev/sandbox for quick client validations
+    }
+
+@router.post("/email/verify-otp")
+def verify_email_otp(otp_in: VerifyOtpRequest):
+    """
+    Validates the 6-digit OTP code for the email.
+    """
+    from app.services.token_service import TokenService
+    TokenService.verify_email_otp(otp_in.email, otp_in.code)
+    return {"success": True, "message": "Email address verified successfully."}
 

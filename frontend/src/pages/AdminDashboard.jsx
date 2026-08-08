@@ -23,6 +23,37 @@ export const AdminDashboard = () => {
   const [mfaErrorMsg, setMfaErrorMsg] = useState("")
   const [mfaLoading, setMfaLoading] = useState(false)
 
+  // Change Password state
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(false)
+  const [changePasswordError, setChangePasswordError] = useState("")
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false)
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setChangePasswordLoading(true)
+    setChangePasswordError("")
+    setChangePasswordSuccess(false)
+    try {
+      const response = await api.post("/api/v1/users/change-password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.detail || "Failed to change password.")
+      }
+      setChangePasswordSuccess(true)
+      setCurrentPassword("")
+      setNewPassword("")
+    } catch (err) {
+      setChangePasswordError(err.message)
+    } finally {
+      setChangePasswordLoading(false)
+    }
+  }
+
   // Enroll handler
   const handleEnrollMfa = async () => {
     setMfaErrorMsg("")
@@ -503,6 +534,66 @@ export const AdminDashboard = () => {
               </button>
             </div>
           )}
+
+          {/* Change Password Panel */}
+          <div className="border-t border-slate-150 pt-8 mt-8">
+            <h3 className="text-lg font-display font-bold text-slate-900 mb-2">Change Account Password</h3>
+            <p className="text-sm text-slate-500 font-light mb-4">
+              Update your account login password. The new password must be at least 8 characters long.
+            </p>
+
+            {changePasswordError && (
+              <div className="mb-4 p-4 rounded-xl bg-rose-50 text-rose-700 flex items-start space-x-2 text-sm max-w-md">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>{changePasswordError}</span>
+              </div>
+            )}
+
+            {changePasswordSuccess && (
+              <div className="mb-4 p-4 rounded-xl bg-emerald-50 text-emerald-700 flex items-start space-x-2 text-sm max-w-md">
+                <CheckCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                <span>Password changed successfully!</span>
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 text-sm bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 text-sm bg-white"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={changePasswordLoading || !currentPassword || !newPassword}
+                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:bg-slate-300"
+              >
+                {changePasswordLoading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 

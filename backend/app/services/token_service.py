@@ -131,3 +131,102 @@ class TokenService:
         db.add(user)
         db.add(db_token)
         db.commit()
+
+    # In-memory store for registration email verification OTPs
+    _active_otps = {}  # email -> {"code": str, "expires_at": datetime, "verified": bool}
+
+    @classmethod
+    def is_valid_email_domain(cls, email: str) -> bool:
+        """
+        Validates syntax and rejects known disposable/dummy email domains.
+        """
+        if not email or "@" not in email:
+            return False
+        
+        domain = email.split("@")[-1].strip().lower()
+        blocked_domains = {
+            "mailinator.com", "yopmail.com", "tempmail.com", 
+            "dummy.com", "10minutemail.com", "dispostable.com", 
+            "guerrillamail.com", "sharklasers.com", "getairmail.com"
+        }
+        return domain not in blocked_domains
+
+    @classmethod
+    def generate_email_otp(cls, email: str) -> str:
+        """
+        Generates a 6-digit email verification OTP expiring in 10 minutes.
+        """
+        clean_email = email.strip().lower()
+        if not cls.is_valid_email_domain(clean_email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Disposable or invalid email domains are not allowed."
+            )
+
+        # Generate a 6-digit numeric OTP code
+        otp_code = "".join(secrets.choice("0123456789") for _ in range(6))
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+        # Save to our active memory store
+        cls._active_otps[clean_email] = {
+            "code": otp_code,
+            "expires_at": expires_at,
+            "verified": False
+        }
+
+        # Print OTP to logs (mock gateway broadcast)
+        print(f"==================================================")
+        print(f" [EMAIL OTP] Verification Code for {clean_email}: {otp_code}")
+        print(f"==================================================")
+
+        return otp_code
+
+    @classmethod
+    def verify_email_otp(cls, email: str, code: str) -> bool:
+        """
+        Verifies the 6-digit OTP code submitted for an email.
+        """
+        clean_email = email.strip().lower()
+        otp_record = cls._active_otps.get(clean_email)
+
+        if not otp_record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No verification OTP was requested for this email."
+            )
+
+        # Check expiration
+        if datetime.now(timezone.utc) > otp_record["expires_at"]:
+            # Clean up expired record
+            cls._active_otps.pop(clean_email, None)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification OTP has expired. Please request a new one."
+            )
+
+        # Validate code
+        if otp_record["code"] != code.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid verification OTP code."
+            )
+
+        # Mark as verified
+        otp_record["verified"] = True
+        return True
+
+    @classmethod
+    def check_and_consume_verified_email(cls, email: str) -> bool:
+        """
+        Confirms email was successfully verified via OTP, and consumes the state.
+        """
+        clean_email = email.strip().lower()
+        otp_record = cls._active_otps.get(clean_email)
+
+        if not otp_record or not otp_record["verified"]:
+            return False
+
+        # Consume the verified state (delete it to prevent re-use)
+        cls._active_otps.pop(clean_email, None)
+        return True
+
