@@ -20,11 +20,13 @@ class TokenService:
         """
         Sends a real email using SMTP if configured. Otherwise logs it.
         """
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_port = os.getenv("SMTP_PORT")
-        smtp_username = os.getenv("SMTP_USERNAME")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        smtp_from = os.getenv("SMTP_FROM") or smtp_username
+        smtp_host = os.getenv("SMTP_HOST").strip() if os.getenv("SMTP_HOST") else None
+        smtp_port = os.getenv("SMTP_PORT").strip() if os.getenv("SMTP_PORT") else None
+        smtp_username = os.getenv("SMTP_USERNAME").strip() if os.getenv("SMTP_USERNAME") else None
+        smtp_password = os.getenv("SMTP_PASSWORD").strip().replace("\n", "").replace("\r", "") if os.getenv("SMTP_PASSWORD") else None
+        smtp_from = os.getenv("SMTP_FROM").strip() if os.getenv("SMTP_FROM") else smtp_username
+        if smtp_from:
+            smtp_from = smtp_from.strip()
 
         if not all([smtp_host, smtp_port, smtp_username, smtp_password]):
             print(f"\n==================================================")
