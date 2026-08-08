@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { api } from "../services/api"
 import { useAuth } from "../context/AuthContext"
-import { Loader, AlertCircle, CheckCircle, ShieldAlert, Check, X, ShieldCheck, Ban, FileText, Activity, Clock, RefreshCw, ShieldAlert as ShieldIcon } from "lucide-react"
+import { Loader, AlertCircle, CheckCircle, ShieldAlert, Check, X, ShieldCheck, Ban, FileText, Activity, Clock, RefreshCw, Trash2, ShieldAlert as ShieldIcon } from "lucide-react"
 
 export const AdminDashboard = () => {
   const { user, setUser } = useAuth()
@@ -252,6 +252,23 @@ export const AdminDashboard = () => {
       if (response.ok) loadAdminData()
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  // Delete hospital handler
+  const handleDeleteHospital = async (hospitalId) => {
+    if (!window.confirm("WARNING: Are you sure you want to completely delete this hospital? This action cannot be undone and will delete all bed inventory history, documents, and staff associations.")) return
+    try {
+      const response = await api.delete(`/api/v1/admin/hospitals/${hospitalId}`)
+      if (response.ok) {
+        loadAdminData()
+      } else {
+        const err = await response.json()
+        alert(err.detail || "Failed to delete hospital.")
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Network error. Please try again.")
     }
   }
 
@@ -752,27 +769,37 @@ export const AdminDashboard = () => {
                     </p>
                   </div>
                   
-                  {hosp.verification_status === "VERIFIED" && (
-                    <div>
-                      {hosp.status === "ACTIVE" ? (
-                        <button
-                          onClick={() => handleSuspendHospital(hosp.id)}
-                          className="flex items-center space-x-1 px-3.5 py-1.5 border border-amber-200 text-amber-600 hover:bg-amber-50 rounded-lg text-xs font-semibold transition-all"
-                        >
-                          <Ban className="h-3.5 w-3.5" />
-                          <span>Suspend</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleActivateHospital(hosp.id)}
-                          className="flex items-center space-x-1 px-3.5 py-1.5 border border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-lg text-xs font-semibold transition-all"
-                        >
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          <span>Activate</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {hosp.verification_status === "VERIFIED" && (
+                      <>
+                        {hosp.status === "ACTIVE" ? (
+                          <button
+                            onClick={() => handleSuspendHospital(hosp.id)}
+                            className="flex items-center space-x-1 px-3.5 py-1.5 border border-amber-200 text-amber-600 hover:bg-amber-50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            <span>Suspend</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivateHospital(hosp.id)}
+                            className="flex items-center space-x-1 px-3.5 py-1.5 border border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span>Activate</span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                    
+                    <button
+                      onClick={() => handleDeleteHospital(hosp.id)}
+                      className="flex items-center space-x-1 px-3.5 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

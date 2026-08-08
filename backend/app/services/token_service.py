@@ -1,5 +1,8 @@
 import hashlib
 import secrets
+import os
+import smtplib
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -11,6 +14,47 @@ from app.core.security import get_password_hash
 
 
 class TokenService:
+
+    @classmethod
+    def send_real_email(cls, to_email: str, subject: str, body: str) -> bool:
+        """
+        Sends a real email using SMTP if configured. Otherwise logs it.
+        """
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_port = os.getenv("SMTP_PORT")
+        smtp_username = os.getenv("SMTP_USERNAME")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        smtp_from = os.getenv("SMTP_FROM") or smtp_username
+
+        if not all([smtp_host, smtp_port, smtp_username, smtp_password]):
+            print(f"\n==================================================")
+            print(f"[MOCK EMAIL] To: {to_email}")
+            print(f"Subject: {subject}")
+            print(f"Body:\n{body}")
+            print(f"==================================================\n")
+            return False
+
+        try:
+            msg = MIMEText(body)
+            msg["Subject"] = subject
+            msg["From"] = smtp_from
+            msg["To"] = to_email
+
+            port = int(smtp_port)
+            if port == 465:
+                server = smtplib.SMTP_SSL(smtp_host, port)
+            else:
+                server = smtplib.SMTP(smtp_host, port)
+                server.starttls()
+
+            server.login(smtp_username, smtp_password)
+            server.sendmail(smtp_from, [to_email], msg.as_string())
+            server.quit()
+            print(f"Real verification email sent to {to_email} successfully!")
+            return True
+        except Exception as e:
+            print(f"SMTP Error sending email to {to_email}: {e}")
+            return False
 
     @staticmethod
     def _hash_token(token: str) -> str:
@@ -174,10 +218,10 @@ class TokenService:
             "verified": False
         }
 
-        # Print OTP to logs (mock gateway broadcast)
-        print(f"==================================================")
-        print(f" [EMAIL OTP] Verification Code for {clean_email}: {otp_code}")
-        print(f"==================================================")
+        # Send OTP code via email
+        subject = "HospBed Registration OTP Code"
+        body = f"Hello,\n\nYour 6-digit email verification code is: {otp_code}\n\nThis OTP will expire in 10 minutes."
+        cls.send_real_email(clean_email, subject, body)
 
         return otp_code
 

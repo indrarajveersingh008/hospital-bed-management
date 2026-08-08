@@ -141,3 +141,15 @@ def list_hospital_documents_for_admin(
     from app.models.document import HospitalDocument
     return db.query(HospitalDocument).filter(HospitalDocument.hospital_id == hospital_id).all()
 
+
+@router.delete("/hospitals/{hospital_id}")
+def delete_hospital_service(
+    hospital_id: int,
+    current_admin: User = Depends(deps.get_current_active_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Completely deletes a hospital and its associated child entities.
+    """
+    return AdminService.delete_hospital(db, hospital_id, current_admin.id)
+

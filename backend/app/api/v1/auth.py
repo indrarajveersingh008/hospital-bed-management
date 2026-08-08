@@ -148,11 +148,15 @@ def forgot_password_workflow(
     Creates a password reset token and returns mock response.
     """
     from app.services.token_service import TokenService
+    import os
     token = TokenService.generate_password_reset(db, forgot_in.email)
     
-    # Emulate mock email sending
-    reset_link = f"http://localhost:5173/reset-password?token={token}"
-    print(f"\n[MOCK EMAIL SEND] Password Reset Link: {reset_link}\n")
+    if token:
+        frontend_url = os.getenv("FRONTEND_URL") or "http://localhost:5173"
+        reset_link = f"{frontend_url}/reset-password?token={token}"
+        subject = "HospBed Password Reset Request"
+        body = f"Hello,\n\nYou requested a password reset for your HospBed account. Please click the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 2 hours."
+        TokenService.send_real_email(forgot_in.email, subject, body)
     
     return {
         "success": True,

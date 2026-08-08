@@ -181,6 +181,58 @@ class AdminService:
         return hospital
 
     @classmethod
+    def delete_hospital(cls, db: Session, hospital_id: int, admin_id: int) -> dict:
+        """
+        Delete a hospital completely from the database including all child tables.
+        """
+        hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+        if not hospital:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Hospital not found."
+            )
+
+        # 1. Delete associated bed inventories & bed updates
+        from app.models.bed_inventory import BedInventory
+        from app.models.bed_update import BedUpdate
+        bed_inventories = db.query(BedInventory).filter(BedInventory.hospital_id == hospital_id).all()
+        for bi in bed_inventories:
+            db.query(BedUpdate).filter(BedUpdate.bed_inventory_id == bi.id).delete(synchronize_session=False)
+        db.query(BedInventory).filter(BedInventory.hospital_id == hospital_id).delete(synchronize_session=False)
+
+        # 2. Delete associated documents
+        from app.models.document import HospitalDocument
+        db.query(HospitalDocument).filter(HospitalDocument.hospital_id == hospital_id).delete(synchronize_session=False)
+
+        # 3. Delete associated staff
+        from app.models.hospital_staff import HospitalStaff
+        db.query(HospitalStaff).filter(HospitalStaff.hospital_id == hospital_id).delete(synchronize_session=False)
+
+        # 4. Delete discrepancy reports
+        from app.models.report import DiscrepancyReport
+        db.query(DiscrepancyReport).filter(DiscrepancyReport.hospital_id == hospital_id).delete(synchronize_session=False)
+
+        # 5. Nullify audits hospital_id references to prevent foreign key issues while maintaining audits history
+        from app.models.audit_log import AuditLog
+        db.query(AuditLog).filter(AuditLog.hospital_id == hospital_id).update({AuditLog.hospital_id: None}, synchronize_session=False)
+
+        # 6. Delete hospital itself
+        db.delete(hospital)
+
+        # Log audit entry
+        audit = AuditLog(
+            user_id=admin_id,
+            action="DELETE_HOSPITAL",
+            entity_type="hospital",
+            entity_id=hospital_id,
+            new_values={"name": hospital.name, "registration_number": hospital.registration_number}
+        )
+        db.add(audit)
+
+        db.commit()
+        return {"success": True, "message": f"Hospital {hospital.name} completely deleted."}
+
+    @classmethod
     def get_dashboard_stats(cls, db: Session) -> AdminDashboardStats:
         """
         Compute dashboard aggregate statistics.
