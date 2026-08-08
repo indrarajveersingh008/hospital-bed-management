@@ -12,6 +12,25 @@ from app import models
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup: Initialize Database Tables
+    from app.core.database import engine
+    from app.models.base import Base
+    import app.models.user
+    import app.models.hospital
+    import app.models.hospital_staff
+    import app.models.bed_type
+    import app.models.bed_inventory
+    import app.models.bed_update
+    import app.models.document
+    import app.models.report
+    import app.models.audit_log
+    import app.models.refresh_token
+    import app.models.tokens
+    import app.models.mfa_secret
+    import app.models.idempotency_key
+
+    Base.metadata.create_all(bind=engine)
+
     # Startup: Start Redis listener loop for WebSockets
     from app.websocket.websocket_manager import manager
     manager.start_listener()
