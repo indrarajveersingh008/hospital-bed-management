@@ -209,8 +209,8 @@ class AdminService:
         db.query(HospitalStaff).filter(HospitalStaff.hospital_id == hospital_id).delete(synchronize_session=False)
 
         # 4. Delete discrepancy reports
-        from app.models.report import DiscrepancyReport
-        db.query(DiscrepancyReport).filter(DiscrepancyReport.hospital_id == hospital_id).delete(synchronize_session=False)
+        from app.models.report import Report
+        db.query(Report).filter(Report.hospital_id == hospital_id).delete(synchronize_session=False)
 
         # 5. Nullify audits hospital_id references to prevent foreign key issues while maintaining audits history
         from app.models.audit_log import AuditLog

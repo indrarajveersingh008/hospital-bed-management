@@ -156,7 +156,13 @@ def forgot_password_workflow(
         reset_link = f"{frontend_url}/reset-password?token={token}"
         subject = "HospBed Password Reset Request"
         body = f"Hello,\n\nYou requested a password reset for your HospBed account. Please click the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 2 hours."
-        TokenService.send_real_email(forgot_in.email, subject, body)
+        email_sent = TokenService.send_real_email(forgot_in.email, subject, body)
+        if os.getenv("SMTP_HOST") and not email_sent:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=500,
+                detail="Mail server failed to deliver the password reset link. Please verify your SMTP configurations."
+            )
     
     return {
         "success": True,

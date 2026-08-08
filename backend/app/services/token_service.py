@@ -42,9 +42,9 @@ class TokenService:
 
             port = int(smtp_port)
             if port == 465:
-                server = smtplib.SMTP_SSL(smtp_host, port)
+                server = smtplib.SMTP_SSL(smtp_host, port, timeout=10)
             else:
-                server = smtplib.SMTP(smtp_host, port)
+                server = smtplib.SMTP(smtp_host, port, timeout=10)
                 server.starttls()
 
             server.login(smtp_username, smtp_password)
@@ -221,7 +221,13 @@ class TokenService:
         # Send OTP code via email
         subject = "HospBed Registration OTP Code"
         body = f"Hello,\n\nYour 6-digit email verification code is: {otp_code}\n\nThis OTP will expire in 10 minutes."
-        cls.send_real_email(clean_email, subject, body)
+        email_sent = cls.send_real_email(clean_email, subject, body)
+
+        if os.getenv("SMTP_HOST") and not email_sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Mail server failed to deliver the OTP. Please verify your SMTP configurations."
+            )
 
         return otp_code
 
