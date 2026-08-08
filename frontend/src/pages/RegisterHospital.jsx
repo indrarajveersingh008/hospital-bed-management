@@ -4,6 +4,45 @@ import { useAuth } from "../context/AuthContext"
 import { api } from "../services/api"
 import { Building2, FileText, Mail, Phone, MapPin, Compass, AlertCircle, CheckCircle, Loader } from "lucide-react"
 
+const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+]
+
 export const RegisterHospital = () => {
   const { setUser } = useAuth()
   const navigate = useNavigate()
@@ -220,14 +259,17 @@ export const RegisterHospital = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">State *</label>
-                <input
-                  type="text"
+                <select
                   required
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  placeholder="Maharashtra"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 placeholder-slate-400 bg-white/50 text-sm transition-all"
-                />
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 bg-white/50 text-sm transition-all"
+                >
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

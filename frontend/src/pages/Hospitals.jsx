@@ -24,6 +24,45 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c
 }
 
+const INDIAN_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+]
+
 export const Hospitals = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [hospitals, setHospitals] = useState([])
@@ -160,13 +199,16 @@ export const Hospitals = () => {
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">State</label>
-          <input
-            type="text"
+          <select
             value={state}
             onChange={(e) => setState(e.target.value)}
-            placeholder="e.g. Maharashtra"
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 placeholder-slate-400 bg-white text-sm"
-          />
+            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 bg-white text-sm"
+          >
+            <option value="">All States</option>
+            {INDIAN_STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
 
         <div>

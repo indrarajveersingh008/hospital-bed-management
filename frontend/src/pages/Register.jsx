@@ -192,7 +192,7 @@ export const Register = () => {
                 </button>
               </div>
               <p className="text-[10px] text-indigo-500 font-light">
-                * Check your server console output logs for the mock OTP verification email.
+                * Check your email inbox (and spam folder) for the 6-digit verification code.
               </p>
             </div>
           )}
