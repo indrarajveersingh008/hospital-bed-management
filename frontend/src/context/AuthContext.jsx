@@ -27,6 +27,19 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const parseErrorDetail = (errData) => {
+    if (!errData || !errData.detail) return "Request failed"
+    if (typeof errData.detail === "string") return errData.detail
+    if (Array.isArray(errData.detail)) {
+      return errData.detail.map(e => {
+        const field = e.loc ? e.loc[e.loc.length - 1] : "field"
+        return `${field}: ${e.msg}`
+      }).join(", ")
+    }
+    if (typeof errData.detail === "object") return JSON.stringify(errData.detail)
+    return "Request failed"
+  }
+
   // Handle unauthorized events dispatched from api.js
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -53,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post("/api/v1/auth/login", { email, password })
       if (!response.ok) {
         const errData = await response.json()
-        throw new Error(errData.detail || "Authentication failed")
+        throw new Error(parseErrorDetail(errData) || "Authentication failed")
       }
       
       const data = await response.json()
@@ -89,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         const errData = await response.json()
-        throw new Error(errData.detail || "MFA validation failed")
+        throw new Error(parseErrorDetail(errData) || "MFA validation failed")
       }
 
       const data = await response.json()
@@ -122,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     })
     if (!response.ok) {
       const errData = await response.json()
-      throw new Error(errData.detail || "Registration failed")
+      throw new Error(parseErrorDetail(errData) || "Registration failed")
     }
     return response.json()
   }
