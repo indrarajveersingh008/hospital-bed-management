@@ -23,5 +23,10 @@ class ReportOut(BaseModel):
     reviewed_at: Optional[datetime] = None
     created_at: datetime
 
+    # UI Meta representation attributes
+    hospital_name: Optional[str] = None
+    hospital_location: Optional[str] = None
+    reporter_email: Optional[str] = None
+
     class Config:
         from_attributes = True

@@ -828,10 +828,19 @@ export const AdminDashboard = () => {
                         {rep.status}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Reason: {rep.reason} • Hospital ID: {rep.hospital_id} • User ID: {rep.user_id}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2 italic font-light">"{rep.description}"</p>
+                    <div className="mt-1.5 space-y-0.5 text-xs text-slate-500">
+                      <p className="font-semibold text-slate-700">
+                        Hospital: <span className="text-brand-600 font-bold">{rep.hospital_name || `ID #${rep.hospital_id}`}</span> 
+                        {rep.hospital_location && <span className="text-slate-400 font-light"> ({rep.hospital_location})</span>}
+                      </p>
+                      <p>
+                        Reason: <span className="font-medium text-slate-700">{rep.reason}</span>
+                      </p>
+                      <p>
+                        Reporter: <span className="font-medium text-slate-700">{rep.reporter_email || `User ID #${rep.user_id}`}</span>
+                      </p>
+                    </div>
+                    <p className="text-sm text-slate-600 mt-3 italic font-light bg-slate-50 border border-slate-100 p-2.5 rounded-xl">"{rep.description}"</p>
                   </div>
 
                   {rep.status === "OPEN" && (

@@ -52,3 +52,15 @@ class Report(Base):
     hospital = relationship("Hospital", foreign_keys=[hospital_id])
     inventory = relationship("BedInventory", foreign_keys=[inventory_id])
     reviewer = relationship("User", foreign_keys=[reviewed_by])
+
+    @property
+    def hospital_name(self) -> str:
+        return self.hospital.name if self.hospital else None
+
+    @property
+    def hospital_location(self) -> str:
+        return f"{self.hospital.city}, {self.hospital.state}" if self.hospital else None
+
+    @property
+    def reporter_email(self) -> str:
+        return self.user.email if self.user else None
