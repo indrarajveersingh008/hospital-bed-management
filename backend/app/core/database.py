@@ -5,8 +5,21 @@ from app.core.config import settings
 
 # Create engines
 # Use pymysql for MySQL connection, configure connection pool for performance & reliability
+import re
+
+def clean_db_url(url: str) -> str:
+    if url and "ssl-mode=" in url:
+        return re.sub(r'[?&]ssl-mode=[^&]*', '', url)
+    return url
+
+db_url = clean_db_url(settings.DATABASE_URL)
+connect_args = {}
+if db_url and "mysql" in db_url:
+    connect_args["ssl"] = {}
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
+    connect_args=connect_args,
     pool_pre_ping=True,  # checks connection health before utilizing
     pool_size=10,        # maximum number of connections to keep in the pool
     max_overflow=20,     # max overflow connections beyond pool_size
@@ -15,8 +28,13 @@ engine = create_engine(
 
 # Configuration for read replica if configured, otherwise fallback to primary engine
 if settings.DATABASE_REPLICA_URL:
+    replica_url = clean_db_url(settings.DATABASE_REPLICA_URL)
+    replica_connect_args = {}
+    if replica_url and "mysql" in replica_url:
+        replica_connect_args["ssl"] = {}
     replica_engine = create_engine(
-        settings.DATABASE_REPLICA_URL,
+        replica_url,
+        connect_args=replica_connect_args,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
