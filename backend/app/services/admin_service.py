@@ -197,7 +197,7 @@ class AdminService:
         from app.models.bed_update import BedUpdate
         bed_inventories = db.query(BedInventory).filter(BedInventory.hospital_id == hospital_id).all()
         for bi in bed_inventories:
-            db.query(BedUpdate).filter(BedUpdate.bed_inventory_id == bi.id).delete(synchronize_session=False)
+            db.query(BedUpdate).filter(BedUpdate.inventory_id == bi.id).delete(synchronize_session=False)
         db.query(BedInventory).filter(BedInventory.hospital_id == hospital_id).delete(synchronize_session=False)
 
         # 2. Delete associated documents
