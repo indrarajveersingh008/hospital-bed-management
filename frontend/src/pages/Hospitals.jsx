@@ -3,9 +3,9 @@ import { useSearchParams, Link } from "react-router-dom"
 import { api } from "../services/api"
 import { Search, MapPin, Building, Eye, Loader, CheckCircle, Navigation, Compass } from "lucide-react"
 
-// Simulated user location (Pune Central coordinates as reference)
-const USER_LAT = 18.5204
-const USER_LNG = 73.8567
+// Default fallback location (Lucknow, Uttar Pradesh coordinates)
+const DEFAULT_LAT = 26.8467
+const DEFAULT_LNG = 80.9462
 
 const deg2rad = (deg) => deg * (Math.PI / 180)
 
@@ -68,6 +68,9 @@ export const Hospitals = () => {
   const [hospitals, setHospitals] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Dynamic user location state (Defaults to UP)
+  const [userCoords, setUserCoords] = useState({ lat: DEFAULT_LAT, lng: DEFAULT_LNG })
+
   // Filter states
   const [city, setCity] = useState(searchParams.get("city") || "")
   const [state, setState] = useState(searchParams.get("state") || "")
@@ -77,6 +80,23 @@ export const Hospitals = () => {
   const [hoveredHospitalId, setHoveredHospitalId] = useState(null)
   const [selectedHospitalId, setSelectedHospitalId] = useState(null)
   const cardRefs = useRef({})
+
+  // Request browser geolocation on load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          })
+        },
+        (error) => {
+          console.log("Geolocation access denied or failed, using UP fallback coordinates.")
+        }
+      )
+    }
+  }, [])
 
   const fetchHospitals = async () => {
     setLoading(true)
@@ -95,11 +115,11 @@ export const Hospitals = () => {
           let lat = hosp.latitude
           let lng = hosp.longitude
           if (!lat || !lng) {
-            // Assign coordinate offsets near central reference for visual plotting
-            lat = USER_LAT + 0.015 * Math.sin(idx * 1.5)
-            lng = USER_LNG + 0.015 * Math.cos(idx * 1.5)
+            // Assign coordinate offsets near user reference for visual plotting
+            lat = userCoords.lat + 0.015 * Math.sin(idx * 1.5)
+            lng = userCoords.lng + 0.015 * Math.cos(idx * 1.5)
           }
-          const dist = getDistance(USER_LAT, USER_LNG, lat, lng)
+          const dist = getDistance(userCoords.lat, userCoords.lng, lat, lng)
           return {
             ...hosp,
             latitude: lat,
@@ -121,7 +141,7 @@ export const Hospitals = () => {
 
   useEffect(() => {
     fetchHospitals()
-  }, [searchParams])
+  }, [searchParams, userCoords])
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -146,11 +166,15 @@ export const Hospitals = () => {
 
   useEffect(() => {
     // 1. Initialize Leaflet map if it hasn't been initialized yet
-    if (mapRef.current && window.L && !leafletMapInstance.current) {
-      leafletMapInstance.current = window.L.map(mapRef.current).setView([USER_LAT, USER_LNG], 12)
-      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(leafletMapInstance.current)
+    if (mapRef.current && window.L) {
+      if (!leafletMapInstance.current) {
+        leafletMapInstance.current = window.L.map(mapRef.current).setView([userCoords.lat, userCoords.lng], 12)
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(leafletMapInstance.current)
+      } else {
+        leafletMapInstance.current.setView([userCoords.lat, userCoords.lng])
+      }
     }
 
     // 2. Clear old markers
@@ -162,7 +186,7 @@ export const Hospitals = () => {
       const points = []
       
       // Add user location circle marker
-      const userMarker = window.L.circleMarker([USER_LAT, USER_LNG], {
+      const userMarker = window.L.circleMarker([userCoords.lat, userCoords.lng], {
         radius: 8,
         fillColor: "#6366f1",
         color: "#ffffff",
@@ -174,7 +198,7 @@ export const Hospitals = () => {
       .bindPopup("<b>Your Location</b>")
       
       markersRef.current.push(userMarker)
-      points.push([USER_LAT, USER_LNG])
+      points.push([userCoords.lat, userCoords.lng])
 
       hospitals.forEach(h => {
         if (h.latitude && h.longitude) {
@@ -191,10 +215,10 @@ export const Hospitals = () => {
       if (points.length > 1) {
         leafletMapInstance.current.fitBounds(points, { padding: [50, 50] })
       } else {
-        leafletMapInstance.current.setView([USER_LAT, USER_LNG], 12)
+        leafletMapInstance.current.setView([userCoords.lat, userCoords.lng], 12)
       }
     }
-  }, [hospitals])
+  }, [hospitals, userCoords])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
