@@ -194,10 +194,19 @@ class VerifyOtpRequest(BaseModel):
     code: str
 
 @router.post("/email/send-otp")
-def send_email_otp(otp_in: SendOtpRequest):
+def send_email_otp(otp_in: SendOtpRequest, db: Session = Depends(get_db)):
     """
     Generates and outputs a 6-digit verification code to the email address.
     """
+    clean_email = otp_in.email.strip().lower()
+    existing_user = db.query(User).filter(User.email == clean_email).first()
+    if existing_user:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already registered to another existing account."
+        )
+
     from app.services.token_service import TokenService
     code = TokenService.generate_email_otp(otp_in.email)
     return {
