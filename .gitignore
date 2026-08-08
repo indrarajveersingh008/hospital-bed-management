@@ -1,0 +1,28 @@
+# Python virtual environments & packages
+backend/.venv/
+backend/__pycache__/
+backend/local_packages/
+*.pyc
+*.pyo
+*.pyd
+
+# Local configuration & credentials (never commit secrets)
+.env
+backend/.env
+backend/backup_export.json
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Node packages & build outputs
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

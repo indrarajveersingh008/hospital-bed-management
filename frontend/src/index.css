@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  
+  /* Curated Premium Colors (HSL-based mapping) */
+  --color-brand-50: hsl(210, 100%, 98%);
+  --color-brand-100: hsl(210, 100%, 95%);
+  --color-brand-500: hsl(217, 91%, 60%);
+  --color-brand-600: hsl(217, 91%, 50%);
+  --color-brand-700: hsl(217, 91%, 40%);
+  
+  --color-slate-900: hsl(222, 47%, 11%);
+  --color-slate-800: hsl(222, 47%, 15%);
+  --color-slate-700: hsl(222, 47%, 20%);
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Base Body Styles */
+body {
+  font-family: var(--font-sans);
+  background-color: hsl(220, 20%, 97%);
+  color: var(--color-slate-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Glassmorphism utility card class */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
