@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { Lock, Mail, AlertCircle, Loader } from "lucide-react"
+import { Lock, Mail, AlertCircle, Loader, Eye, EyeOff } from "lucide-react"
 
 export const Login = () => {
   const { login, verifyMfaLogin } = useAuth()
@@ -11,6 +11,7 @@ export const Login = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // 2FA state
   const [mfaRequired, setMfaRequired] = useState(false)
@@ -153,13 +154,20 @@ export const Login = () => {
               <div className="relative flex items-center">
                 <Lock className="absolute left-3.5 h-5 w-5 text-slate-400" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 placeholder-slate-400 bg-white/50 text-sm transition-all"
+                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 placeholder-slate-400 bg-white/50 text-sm transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
