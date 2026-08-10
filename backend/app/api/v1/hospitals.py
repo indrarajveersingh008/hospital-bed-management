@@ -29,9 +29,9 @@ def search_hospitals(
         Hospital.verification_status == VerificationStatus.VERIFIED
     )
     if city:
-        query = query.filter(Hospital.city.ilike(f"%{city}%"))
+        query = query.filter(Hospital.city.ilike(f"{city}%"))
     if state:
-        query = query.filter(Hospital.state.ilike(f"%{state}%"))
+        query = query.filter(Hospital.state.ilike(f"{state}%"))
     if hospital_type:
         query = query.filter(Hospital.hospital_type == hospital_type)
     return query.all()

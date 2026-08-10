@@ -262,7 +262,7 @@ export const Hospitals = () => {
             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 bg-white text-sm"
           >
             <option value="">All Types</option>
-            <option value="PUBLIC">Public</option>
+            <option value="GOVERNMENT">Government (Public)</option>
             <option value="PRIVATE">Private</option>
             <option value="TRUST">Trust</option>
           </select>
