@@ -52,7 +52,12 @@ app = FastAPI(
 # In production, this should list only specific allowed domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:8081",
+        "http://127.0.0.1:8081",
+        "https://hospital-bed-management-pink.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
