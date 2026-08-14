@@ -67,6 +67,7 @@ export const Hospitals = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [hospitals, setHospitals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState("")
 
   // Dynamic user location state (Defaults to UP)
   const [userCoords, setUserCoords] = useState({ lat: DEFAULT_LAT, lng: DEFAULT_LNG })
@@ -100,6 +101,7 @@ export const Hospitals = () => {
 
   const fetchHospitals = async () => {
     setLoading(true)
+    setErrorMsg("")
     try {
       const params = new URLSearchParams()
       if (city) params.append("city", city)
@@ -107,33 +109,37 @@ export const Hospitals = () => {
       if (type) params.append("hospital_type", type)
 
       const response = await api.get(`/api/v1/hospital/?${params.toString()}`)
-      if (response.ok) {
-        const data = await response.json()
-        
-        // Enrich data with coordinates fallback if not present in DB
-        const enriched = data.map((hosp, idx) => {
-          let lat = hosp.latitude
-          let lng = hosp.longitude
-          if (!lat || !lng) {
-            // Assign coordinate offsets near user reference for visual plotting
-            lat = userCoords.lat + 0.015 * Math.sin(idx * 1.5)
-            lng = userCoords.lng + 0.015 * Math.cos(idx * 1.5)
-          }
-          const dist = getDistance(userCoords.lat, userCoords.lng, lat, lng)
-          return {
-            ...hosp,
-            latitude: lat,
-            longitude: lng,
-            distance: dist
-          }
-        })
-        
-        // Sort by distance from user
-        enriched.sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        setHospitals(enriched)
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.detail || "Failed to load hospital records from server.")
       }
+
+      const data = await response.json()
+      
+      // Enrich data with coordinates fallback if not present in DB
+      const enriched = data.map((hosp, idx) => {
+        let lat = hosp.latitude
+        let lng = hosp.longitude
+        if (!lat || !lng) {
+          // Assign coordinate offsets near user reference for visual plotting
+          lat = userCoords.lat + 0.015 * Math.sin(idx * 1.5)
+          lng = userCoords.lng + 0.015 * Math.cos(idx * 1.5)
+        }
+        const dist = getDistance(userCoords.lat, userCoords.lng, lat, lng)
+        return {
+          ...hosp,
+          latitude: lat,
+          longitude: lng,
+          distance: dist
+        }
+      })
+      
+      // Sort by distance from user
+      enriched.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+      setHospitals(enriched)
     } catch (error) {
       console.error("Failed to load hospitals:", error)
+      setErrorMsg(error.message || "Failed to contact search service.")
     } finally {
       setLoading(false)
     }
@@ -281,6 +287,11 @@ export const Hospitals = () => {
         <div className="flex flex-col items-center justify-center py-20">
           <Loader className="h-10 w-10 text-brand-500 animate-spin mb-4" />
           <span className="text-slate-500 text-sm">Searching Hospitals...</span>
+        </div>
+      ) : errorMsg ? (
+        <div className="text-center py-20 glass-panel rounded-3xl border border-rose-100 bg-rose-50/10">
+          <ShieldAlert className="h-10 w-10 text-rose-500 mx-auto mb-4" />
+          <p className="text-rose-600 font-medium">{errorMsg}</p>
         </div>
       ) : hospitals.length === 0 ? (
         <div className="text-center py-20 glass-panel rounded-3xl">
