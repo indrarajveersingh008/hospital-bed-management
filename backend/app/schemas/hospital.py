@@ -9,7 +9,7 @@ class HospitalBase(BaseModel):
     registration_number: str = Field(..., min_length=2, max_length=100)
     hospital_type: HospitalType
     email: Optional[str] = Field(default=None, max_length=255)
-    phone: Optional[str] = Field(default=None, max_length=20)
+    phone: str = Field(..., min_length=5, max_length=20)
     emergency_phone: Optional[str] = Field(default=None, max_length=20)
     address: str = Field(..., min_length=5, max_length=500)
     city: str = Field(..., min_length=2, max_length=100)

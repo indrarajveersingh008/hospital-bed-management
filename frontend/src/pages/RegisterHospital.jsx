@@ -71,12 +71,18 @@ export const RegisterHospital = () => {
     setSuccess(false)
     setLoading(true)
 
+    if (!phone.trim()) {
+      setError("General Phone number is required")
+      setLoading(false)
+      return
+    }
+
     const payload = {
       name,
       registration_number: regNumber,
       hospital_type: hospType,
       email: email || null,
-      phone: phone || null,
+      phone: phone.trim(),
       emergency_phone: emergencyPhone || null,
       address,
       city,
@@ -216,6 +222,7 @@ export const RegisterHospital = () => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+91 22 555-0100"
+                    required
                     className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 outline-none text-slate-800 placeholder-slate-400 bg-white/50 text-sm transition-all"
                   />
                 </div>
