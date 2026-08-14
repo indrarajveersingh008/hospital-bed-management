@@ -29,17 +29,17 @@ def search_hospitals(
     query = db.query(Hospital).filter(
         Hospital.verification_status == VerificationStatus.VERIFIED
     )
-    if city:
-        query = query.filter(Hospital.city.ilike(f"{city}%"))
-    if state:
-        query = query.filter(Hospital.state.ilike(f"{state}%"))
-    if hospital_type:
-        query = query.filter(Hospital.hospital_type == hospital_type)
-    if bed_type:
+    if city and city.strip():
+        query = query.filter(Hospital.city.ilike(f"%{city.strip()}%"))
+    if state and state.strip() and state != "All States":
+        query = query.filter(Hospital.state.ilike(f"%{state.strip()}%"))
+    if hospital_type and hospital_type.strip():
+        query = query.filter(Hospital.hospital_type == hospital_type.strip())
+    if bed_type and bed_type.strip():
         from app.models.bed_inventory import BedInventory
         from app.models.bed_type import BedType
         query = query.join(BedInventory).join(BedType).filter(
-            BedType.name.ilike(f"%{bed_type}%"),
+            BedType.name.ilike(f"%{bed_type.strip()}%"),
             BedInventory.available_beds > 0
         )
     return query.all()
