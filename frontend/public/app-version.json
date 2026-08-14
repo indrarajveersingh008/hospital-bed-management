@@ -1,5 +1,5 @@
 {
   "version": "1.0.1",
-  "apkUrl": "https://expo.dev/artifacts/eas/nF3abcuVBP8cx-BUpPukxiaMHkcaP9uo6CIcjJwzDAs.apk",
-  "releaseNotes": "Polished splash screen icon, resolved layout shift, fixed search results, integrated native location permission prompts, added MFA support for admin logins, and integrated settings profile views for Admin and Staff."
+  "apkUrl": "https://expo.dev/artifacts/eas/0av2lOy58uWcwnJfnjYgXZJ62VUjDChvtaoCo8jCQCg.apk",
+  "releaseNotes": "Polished splash screen icon, resolved layout shift, fixed search results, integrated native location permission prompts, added MFA support for admin logins, integrated settings profile views for Admin and Staff, and enabled public-to-portal redirect links."
 }
