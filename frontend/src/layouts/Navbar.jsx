@@ -21,7 +21,7 @@ export const Navbar = () => {
             <Link to="/" className="flex items-center space-x-2">
               <Activity className="h-8 w-8 text-brand-600 animate-pulse" />
               <span className="font-display font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand-600 to-indigo-600 bg-clip-text text-transparent">
-                HospBed
+                TrackBed
               </span>
             </Link>
           </div>
@@ -35,6 +35,15 @@ export const Navbar = () => {
               <Search className="h-4 w-4" />
               <span>Search Beds</span>
             </Link>
+
+            <a
+              href="https://expo.dev/artifacts/eas/cO0fXrWTN_DhRWLvoc8-M923PMJe1u2abd0Ps8ynikY.apk"
+              className="flex items-center space-x-1 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 hover:text-brand-600 hover:bg-slate-100/50 transition-all duration-200"
+            >
+              <Activity className="h-4 w-4 text-brand-600" />
+              <span>Download App</span>
+            </a>
+
 
             {user ? (
               <div className="flex items-center space-x-3">
