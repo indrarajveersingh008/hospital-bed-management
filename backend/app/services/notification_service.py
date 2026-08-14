@@ -1,4 +1,8 @@
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from app.core.config import settings
 
 logger = logging.getLogger("notification_service")
 
@@ -12,14 +16,44 @@ class NotificationService:
     @classmethod
     def send_email(cls, to_email: str, subject: str, body_html: str) -> None:
         """
-        Base mock email dispatcher.
+        Base email dispatcher with SMTP support and Mock fallback.
         """
+        if settings.SMTP_HOST:
+            try:
+                msg = MIMEMultipart()
+                msg["From"] = settings.SMTP_FROM or settings.SMTP_USER
+                msg["To"] = to_email
+                msg["Subject"] = subject
+                
+                contentType = "html" if "<" in body_html and ">" in body_html else "plain"
+                msg.attach(MIMEText(body_html, contentType))
+
+                server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+                server.ehlo()
+                
+                if settings.SMTP_PORT == 587:
+                    server.starttls()
+                    server.ehlo()
+                
+                if settings.SMTP_USER and settings.SMTP_PASSWORD:
+                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                
+                server.sendmail(msg["From"], to_email, msg.as_string())
+                server.quit()
+                
+                logger.info(f"Email successfully sent via SMTP to: {to_email}")
+                return
+            except Exception as e:
+                logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}. Falling back to mock dispatch.")
+
+        # Fallback Mock dispatcher
         print(f"\n--- [MOCK EMAIL DISPATCH] ---")
         print(f"To: {to_email}")
         print(f"Subject: {subject}")
         print(f"Body:\n{body_html}")
         print(f"-----------------------------\n")
         logger.info(f"Mock email successfully dispatched to: {to_email}")
+
 
     @classmethod
     def send_sms(cls, to_phone: str, message: str) -> None:

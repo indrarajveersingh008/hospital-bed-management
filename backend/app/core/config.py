@@ -34,6 +34,14 @@ class Settings(BaseModel):
     SECRETS_VAULT_TOKEN: Optional[str] = Field(default_factory=lambda: os.getenv("SECRETS_VAULT_TOKEN"))
     SECRETS_AWS_REGION: Optional[str] = Field(default_factory=lambda: os.getenv("SECRETS_AWS_REGION", "us-east-1"))
 
+    # SMTP Email Settings
+    SMTP_HOST: Optional[str] = Field(default_factory=lambda: os.getenv("SMTP_HOST"))
+    SMTP_PORT: int = Field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587")))
+    SMTP_USER: Optional[str] = Field(default_factory=lambda: os.getenv("SMTP_USER"))
+    SMTP_PASSWORD: Optional[str] = Field(default_factory=lambda: os.getenv("SMTP_PASSWORD"))
+    SMTP_FROM: Optional[str] = Field(default_factory=lambda: os.getenv("SMTP_FROM"))
+
+
 
 # Initialize settings
 settings = Settings()
