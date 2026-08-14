@@ -22,7 +22,7 @@ class TOTP:
         return "".join(random.choice(alphabet) for _ in range(16))
 
     @staticmethod
-    def generate_provisioning_uri(secret: str, email: str, issuer: str = "HospBed") -> str:
+    def generate_provisioning_uri(secret: str, email: str, issuer: str = "TrackBed") -> str:
         """
         Generate standard OTP provisioning URI for scanner apps.
         """

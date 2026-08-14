@@ -152,10 +152,10 @@ def forgot_password_workflow(
     token = TokenService.generate_password_reset(db, forgot_in.email)
     
     if token:
-        frontend_url = os.getenv("FRONTEND_URL") or "http://localhost:5173"
+        frontend_url = os.getenv("FRONTEND_URL") or "https://hospital-bed-management-pink.vercel.app"
         reset_link = f"{frontend_url}/reset-password?token={token}"
-        subject = "HospBed Password Reset Request"
-        body = f"Hello,\n\nYou requested a password reset for your HospBed account. Please click the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 2 hours."
+        subject = "TrackBed Password Reset Request"
+        body = f"Hello,\n\nYou requested a password reset for your TrackBed account. Please click the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 2 hours."
         email_sent = TokenService.send_real_email(forgot_in.email, subject, body)
         if os.getenv("SMTP_HOST") and not email_sent:
             from fastapi import HTTPException

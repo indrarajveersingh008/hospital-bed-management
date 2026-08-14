@@ -221,7 +221,7 @@ class TokenService:
         }
 
         # Send OTP code via email
-        subject = "HospBed Registration OTP Code"
+        subject = "TrackBed Registration OTP Code"
         body = f"Hello,\n\nYour 6-digit email verification code is: {otp_code}\n\nThis OTP will expire in 10 minutes."
         email_sent = cls.send_real_email(clean_email, subject, body)
 
