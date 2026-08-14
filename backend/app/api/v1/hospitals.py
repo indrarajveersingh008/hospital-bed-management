@@ -19,11 +19,12 @@ def search_hospitals(
     city: Optional[str] = None,
     state: Optional[str] = None,
     hospital_type: Optional[str] = None,
+    bed_type: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """
     Public search endpoint to locate verified hospitals.
-    Can be filtered by city, state, or hospital type.
+    Can be filtered by city, state, hospital type, or available bed category.
     """
     query = db.query(Hospital).filter(
         Hospital.verification_status == VerificationStatus.VERIFIED
@@ -34,6 +35,13 @@ def search_hospitals(
         query = query.filter(Hospital.state.ilike(f"{state}%"))
     if hospital_type:
         query = query.filter(Hospital.hospital_type == hospital_type)
+    if bed_type:
+        from app.models.bed_inventory import BedInventory
+        from app.models.bed_type import BedType
+        query = query.join(BedInventory).join(BedType).filter(
+            BedType.name.ilike(f"%{bed_type}%"),
+            BedInventory.available_beds > 0
+        )
     return query.all()
 
 
