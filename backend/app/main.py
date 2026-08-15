@@ -90,12 +90,21 @@ def health_check():
     """
     from app.core.database import SessionLocal
     db = SessionLocal()
-    hospitals_cols = []
+    hospitals_rows = []
     db_error = None
     try:
         from sqlalchemy import text
-        res = db.execute(text("SHOW COLUMNS FROM hospitals;")).fetchall()
-        hospitals_cols = [row[0] for row in res]
+        res = db.execute(text("SELECT * FROM hospitals;")).fetchall()
+        cols = db.execute(text("SHOW COLUMNS FROM hospitals;")).fetchall()
+        col_names = [row[0] for row in cols]
+        
+        for row in res:
+            row_dict = {}
+            for idx, val in enumerate(row):
+                if hasattr(val, "isoformat"):
+                    val = val.isoformat()
+                row_dict[col_names[idx]] = str(val)
+            hospitals_rows.append(row_dict)
     except Exception as e:
         db_error = str(e)
     finally:
@@ -105,6 +114,6 @@ def health_check():
         "status": "healthy",
         "app_name": settings.APP_NAME,
         "version": "1.0.0",
-        "hospitals_columns": hospitals_cols,
+        "hospitals_rows": hospitals_rows,
         "db_error": db_error
     }
