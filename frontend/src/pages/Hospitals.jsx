@@ -76,6 +76,7 @@ export const Hospitals = () => {
   const [city, setCity] = useState(searchParams.get("city") || "")
   const [state, setState] = useState(searchParams.get("state") || "")
   const [type, setType] = useState(searchParams.get("type") || "")
+  const [leafletLoaded, setLeafletLoaded] = useState(false)
 
   // Interactive Map states
   const [hoveredHospitalId, setHoveredHospitalId] = useState(null)
@@ -170,7 +171,24 @@ export const Hospitals = () => {
   const leafletMapInstance = useRef(null)
   const markersRef = useRef([])
 
+  // Watch for Leaflet L object download completion
   useEffect(() => {
+    if (window.L) {
+      setLeafletLoaded(true)
+      return
+    }
+    const interval = setInterval(() => {
+      if (window.L) {
+        setLeafletLoaded(true)
+        clearInterval(interval)
+      }
+    }, 100)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (!leafletLoaded) return
+
     // 1. Initialize Leaflet map if it hasn't been initialized yet
     if (mapRef.current && window.L) {
       if (!leafletMapInstance.current) {
@@ -224,7 +242,7 @@ export const Hospitals = () => {
         leafletMapInstance.current.setView([userCoords.lat, userCoords.lng], 12)
       }
     }
-  }, [hospitals, userCoords])
+  }, [hospitals, userCoords, leafletLoaded])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
