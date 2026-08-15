@@ -1,5 +1,5 @@
 {
   "version": "1.0.1",
-  "apkUrl": "https://expo.dev/artifacts/eas/sptGYLzLKzgmkhGVeW2yTty0OWgPU9uTLrxFR_ATp58.apk",
-  "releaseNotes": "Polished splash screen icon, resolved layout shift, fixed search results, integrated native location permission prompts, added MFA support for admin logins, integrated settings profile views for Admin and Staff, enabled public-to-portal redirect links, and native hospital registration."
+  "apkUrl": "https://expo.dev/artifacts/eas/NDFXHwNpmA10bjGPHlzLUacnuHW0qvpFkQ_1qEdVynw.apk",
+  "releaseNotes": "Resolved launch welcome screen flashes, fixed Area Coverage map native crashes on Android, added mobile MFA setup, and hidden the hospital registration tab screen from the bottom menu tab bar."
 }
