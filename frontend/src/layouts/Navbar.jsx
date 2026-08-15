@@ -37,7 +37,7 @@ export const Navbar = () => {
             </Link>
 
             <a
-              href="https://expo.dev/artifacts/eas/0av2lOy58uWcwnJfnjYgXZJ62VUjDChvtaoCo8jCQCg.apk"
+              href="https://expo.dev/artifacts/eas/sptGYLzLKzgmkhGVeW2yTty0OWgPU9uTLrxFR_ATp58.apk"
               className="flex items-center space-x-1 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 hover:text-brand-600 hover:bg-slate-100/50 transition-all duration-200"
             >
               <Activity className="h-4 w-4 text-brand-600" />
