@@ -88,8 +88,23 @@ def health_check():
     """
     Simple health check route to verify backend service state.
     """
+    from app.core.database import SessionLocal
+    db = SessionLocal()
+    hospitals_cols = []
+    db_error = None
+    try:
+        from sqlalchemy import text
+        res = db.execute(text("SHOW COLUMNS FROM hospitals;")).fetchall()
+        hospitals_cols = [row[0] for row in res]
+    except Exception as e:
+        db_error = str(e)
+    finally:
+        db.close()
+
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "hospitals_columns": hospitals_cols,
+        "db_error": db_error
     }
