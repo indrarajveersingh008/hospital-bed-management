@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
-  "apkUrl": "https://expo.dev/artifacts/eas/DtSnSc-aJHP5KRpAA_TfatP5-zE2RW_rMhNEPBA6H_k.apk",
-  "releaseNotes": "Embedded live interactive Leaflet map directly inside the Coverage Map tab, resolved Vercel website white screen issues, and added native MFA setup controls."
+  "version": "1.0.3",
+  "apkUrl": "https://expo.dev/artifacts/eas/5G-jmdZEwYa5fT4r34qV_vhXgo7duXe66tA3M04c-m0.apk",
+  "releaseNotes": "Embedded live interactive Leaflet map directly inside the Coverage Map tab, resolved Vercel website white screen issues, fixed bed inventory timezone offset formatting, and added native MFA setup controls."
 }
