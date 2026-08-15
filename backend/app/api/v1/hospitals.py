@@ -38,7 +38,11 @@ def search_hospitals(
     if bed_type and bed_type.strip():
         from app.models.bed_inventory import BedInventory
         from app.models.bed_type import BedType
-        query = query.join(BedInventory).join(BedType).filter(
+        query = query.join(
+            BedInventory, BedInventory.hospital_id == Hospital.id
+        ).join(
+            BedType, BedType.id == BedInventory.bed_type_id
+        ).filter(
             BedType.name.ilike(f"%{bed_type.strip()}%"),
             BedInventory.available_beds > 0
         )
