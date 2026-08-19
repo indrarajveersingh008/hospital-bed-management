@@ -32,6 +32,14 @@ class AuditLog(Base):
     user = relationship("User", foreign_keys=[user_id])
     hospital = relationship("Hospital", foreign_keys=[hospital_id])
 
+    @property
+    def user_email(self) -> str:
+        return self.user.email if self.user else None
+
+    @property
+    def hospital_name(self) -> str:
+        return self.hospital.name if self.hospital else None
+
     __table_args__ = (
         Index("idx_audit_user", "user_id"),
         Index("idx_audit_hospital", "hospital_id"),

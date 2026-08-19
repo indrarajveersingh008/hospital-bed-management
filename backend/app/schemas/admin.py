@@ -29,6 +29,10 @@ class AuditLogOut(BaseModel):
     user_agent: Optional[str] = None
     created_at: datetime
 
+    # UI Meta representation attributes
+    user_email: Optional[str] = None
+    hospital_name: Optional[str] = None
+
     class Config:
         from_attributes = True
 
