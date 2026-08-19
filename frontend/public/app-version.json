@@ -1,5 +1,5 @@
 {
-  "version": "1.0.3",
-  "apkUrl": "https://expo.dev/artifacts/eas/5G-jmdZEwYa5fT4r34qV_vhXgo7duXe66tA3M04c-m0.apk",
-  "releaseNotes": "Embedded live interactive Leaflet map directly inside the Coverage Map tab, resolved Vercel website white screen issues, fixed bed inventory timezone offset formatting, and added native MFA setup controls."
+  "version": "1.0.4",
+  "apkUrl": "https://expo.dev/artifacts/eas/X0UGww8eCqaTNUgP9wdvWrnASRUDvyjETp-u6sPSGQM.apk",
+  "releaseNotes": "Resolved empty admin profile buttons rendering text in invisible colors, added defensive Axios interceptor error handling to prevent blank screen crashes, and updated the pre-registration verification to run on a shared persistent SQLite engine to eliminate multi-worker session mismatches."
 }
