@@ -2,6 +2,7 @@ import hashlib
 import secrets
 import os
 import smtplib
+import sqlite3
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -178,8 +179,22 @@ class TokenService:
         db.add(db_token)
         db.commit()
 
-    # In-memory store for registration email verification OTPs
-    _active_otps = {}  # email -> {"code": str, "expires_at": datetime, "verified": bool}
+    DB_PATH = os.path.join(os.path.dirname(__file__), "otps.db")
+
+    @classmethod
+    def _init_db(cls):
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS otps (
+                email TEXT PRIMARY KEY,
+                code TEXT,
+                expires_at REAL,
+                verified INTEGER
+            )
+        """)
+        conn.commit()
+        conn.close()
 
     @classmethod
     def is_valid_email_domain(cls, email: str) -> bool:
@@ -213,12 +228,16 @@ class TokenService:
         otp_code = "".join(secrets.choice("0123456789") for _ in range(6))
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
-        # Save to our active memory store
-        cls._active_otps[clean_email] = {
-            "code": otp_code,
-            "expires_at": expires_at,
-            "verified": False
-        }
+        # Save to SQLite database
+        cls._init_db()
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO otps (email, code, expires_at, verified) VALUES (?, ?, ?, 0)",
+            (clean_email, otp_code, expires_at.timestamp())
+        )
+        conn.commit()
+        conn.close()
 
         # Send OTP code via email
         subject = "TrackBed Registration OTP Code"
@@ -239,32 +258,48 @@ class TokenService:
         Verifies the 6-digit OTP code submitted for an email.
         """
         clean_email = email.strip().lower()
-        otp_record = cls._active_otps.get(clean_email)
+        
+        cls._init_db()
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT code, expires_at FROM otps WHERE email = ?", (clean_email,))
+        row = cursor.fetchone()
+        conn.close()
 
-        if not otp_record:
+        if not row:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No verification OTP was requested for this email."
             )
 
+        db_code, db_expires_at = row[0], row[1]
+
         # Check expiration
-        if datetime.now(timezone.utc) > otp_record["expires_at"]:
+        if datetime.now(timezone.utc).timestamp() > db_expires_at:
             # Clean up expired record
-            cls._active_otps.pop(clean_email, None)
+            conn = sqlite3.connect(cls.DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM otps WHERE email = ?", (clean_email,))
+            conn.commit()
+            conn.close()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Verification OTP has expired. Please request a new one."
             )
 
         # Validate code
-        if otp_record["code"] != code.strip():
+        if db_code != code.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid verification OTP code."
             )
 
         # Mark as verified
-        otp_record["verified"] = True
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE otps SET verified = 1 WHERE email = ?", (clean_email,))
+        conn.commit()
+        conn.close()
         return True
 
     @classmethod
@@ -273,12 +308,22 @@ class TokenService:
         Confirms email was successfully verified via OTP, and consumes the state.
         """
         clean_email = email.strip().lower()
-        otp_record = cls._active_otps.get(clean_email)
+        
+        cls._init_db()
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT verified FROM otps WHERE email = ?", (clean_email,))
+        row = cursor.fetchone()
+        conn.close()
 
-        if not otp_record or not otp_record["verified"]:
+        if not row or not bool(row[0]):
             return False
 
         # Consume the verified state (delete it to prevent re-use)
-        cls._active_otps.pop(clean_email, None)
+        conn = sqlite3.connect(cls.DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM otps WHERE email = ?", (clean_email,))
+        conn.commit()
+        conn.close()
         return True
 
